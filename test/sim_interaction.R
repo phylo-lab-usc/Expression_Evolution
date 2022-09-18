@@ -104,9 +104,6 @@ for(t in 2:(T+1)){
 	pt[,t]=g2p(gt[,t],coeff) # Record the phenotype
 }
 
-dcr=1;dcp=1 #decay rates of mRNA and protein (assumed to be the same for all genes)
-coeff=100 #concentration of regulator at which 1/2 of maximum regulation effect is reached
-
 # Simulate multiple replicate lineages
 Nrep=100 # Number of replicate lineages
 gt=list() # Genotypic values of all lineages through time (each lineage would be a matrix in the list)
