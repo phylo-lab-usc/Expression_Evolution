@@ -1,6 +1,6 @@
 # Modeling coevolution between mRNA and protein levels for two interacting genes
 
-Ne=10000 # Effective population size
+Ne=1e3 # Effective population size
 dcr=1;dcp=1 # Decay rates of mRNA and protein (assumed to be the same for all genes)
 coeff=c(0.1,-0.1) # Interaction parameters; effect of gene 1 on gene 2 and effect of gene 2 on gene 1, respectively
 
@@ -66,7 +66,7 @@ gt=matrix(0,nrow=4,ncol=(T+1))
 # Matrix to store phenotypes
 # Rows: mRNA level of gene 1, protein level of gene 1, mRNA level of gene 2, protein level of gene 2
 pt=matrix(0,nrow=4,ncol=(T+1))
-pt[,1]=g2p(gt[,1]) # Calculate initial phenotype
+pt[,1]=g2p(gt[,1],coeff) # Calculate initial phenotype
 
 for(t in 2:(T+1)){
 	gt[,t]=gt[,(t-1)]
@@ -74,7 +74,7 @@ for(t in 2:(T+1)){
 	if(nm>0){
 		for(i in 1:nm){
 			gt_ances=gt[,t] # Ancestral genotype
-			pt_ances=g2p(gt_ances) # Ancestral phenotype
+			pt_ances=g2p(gt_ances,coeff) # Ancestral phenotype
 			gt_mutant=gt_ances
 			type=sample(1:4,1,prob=c(lambda1/lambda.all,lambda2/lambda.all,lambda3/lambda.all,lambda4/lambda.all)) # Decide which trait the mutation would affect
 			if(type==1){
@@ -93,7 +93,7 @@ for(t in 2:(T+1)){
 				effect=rnorm(1,mean=0,sd=sig4) # Mutation's phenotypic effect
 				gt_mutant[4]=exp(log(gt_mutant[4])+effect) # Genotypic value of the mutant (original scale)
 			}
-			pt_mutant=g2p(gt_mutant) # Mutant phenotype
+			pt_mutant=g2p(gt_mutant,coeff) # Mutant phenotype
 			pf=fix.prob(log(pt_ances[4]),log(pt_mutant[4]),width) # Calculate fixation probability
 			if.fix=rbinom(n=1,size=1,prob=pf) # Decide whether the mutation would fix
 			if(if.fix==1){
@@ -101,7 +101,7 @@ for(t in 2:(T+1)){
 			}
 		}
 	}
-	pt[,t]=g2p(gt[,t]) # Record the phenotype
+	pt[,t]=g2p(gt[,t],coeff) # Record the phenotype
 }
 
 dcr=1;dcp=1 #decay rates of mRNA and protein (assumed to be the same for all genes)
@@ -114,7 +114,7 @@ pt=list() # Phenotypes of all lineages through time (each lineage would be a mat
 for(n in 1:Nrep){
 	gt[[n]]=matrix(0,nrow=4,ncol=(T+1)) # Genotypic values of the n-th lineage
 	pt[[n]]=matrix(0,nrow=4,ncol=(T+1)) # Phenotypes of the n-th lineage
-	pt[[n]][,1]=g2p(gt[[n]][,1]) # Initial phenotype of the n-th lineage
+	pt[[n]][,1]=g2p(gt[[n]][,1],coeff) # Initial phenotype of the n-th lineage
 	for(t in 2:(T+1)){
 		gt[[n]][,t]=gt[[n]][,(t-1)]
 		nm=rpois(1,lambda=lambda.all)
@@ -140,7 +140,7 @@ for(n in 1:Nrep){
 					effect=rnorm(1,mean=0,sd=sig4)
 					gt_mutant[4]=exp(log(gt_mutant[4])+effect)
 				}
-				pt_mutant=g2p(gt_mutant)
+				pt_mutant=g2p(gt_mutant,coeff)
 				pf=fix.prob(pt_ances[4],pt_mutant[4],width)
 				if.fix=rbinom(n=1,size=1,prob=pf)
 				if(if.fix==1){
@@ -148,6 +148,6 @@ for(n in 1:Nrep){
 				}
 			}
 		}
-		pt[[n]][,t]=g2p(gt[[n]][,t])
+		pt[[n]][,t]=g2p(gt[[n]][,t],coeff)
 	}
 }
