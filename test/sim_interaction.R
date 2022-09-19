@@ -35,15 +35,17 @@ fix.prob <- function(x1,x2,a){
 
 # Genotype-phenotype map
 # Return the phenotype (equilibrium mRNA and protein abundances) given genotypic values and interaction parameters
+# Input and output both in log scale
 g2p <- function(gt,coeff){
 	a1=gt[1];b1=gt[2];a2=gt[3];b2=gt[4]
-	right=c(log(dcp)-b1,log(dcr)-a2,log(dcp)-b2,log(dcr)-a1) #input in log scale
+	right=c(log(dcp)-b1,log(dcr)-a2,log(dcp)-b2,log(dcr)-a1)
 	mat=rbind(c(1,-1,0,0),c(0,coeff[1],-1,0),c(0,0,1,-1),c(-1,0,0,coeff[2]))
 	pt=solve(mat,right)
-	return(pt) #return log scale phenotypes
+	return(pt) # Return log scale phenotypes
 }
 
 # Mutation rate of each trait (mean number of mutations per unit time)
+# Equivalent to 2*Ne*u in population genetic models (u is mutation rate per genome per unit time)
 lambda1=1 # Rate of mutations affecting transcription rate of gene 1
 lambda2=1 # Rate of mutations affecting per-mRNA translation rate (translational efficiency) of gene 1
 lambda3=1 # Rate of mutations affecting transcription rate of gene 2
@@ -58,11 +60,11 @@ sig3=0.1
 sig4=0.1
 
 width=1 # Width of fitness fucntion (x-axis in log scale)
-T=1e5 # Duration of the simulation
+T=1e6 # Duration of the simulation
 
 # Matrix to store genotypic values
 # Rows: mRNA level of gene 1, translational efficiency of gene 1, mRNA level of gene 2, translational efficiency of gene 2
-gt=matrix(1,nrow=4,ncol=(T+1))
+gt=matrix(0,nrow=4,ncol=(T+1))
 # Matrix to store phenotypes
 # Rows: mRNA level of gene 1, protein level of gene 1, mRNA level of gene 2, protein level of gene 2
 pt=matrix(0,nrow=4,ncol=(T+1))
@@ -79,37 +81,38 @@ for(t in 2:(T+1)){
 			type=sample(1:4,1,prob=c(lambda1/lambda.all,lambda2/lambda.all,lambda3/lambda.all,lambda4/lambda.all)) # Decide which trait the mutation would affect
 			if(type==1){
 				effect=rnorm(1,mean=0,sd=sig1) # Mutation's phenotypic effect
-				gt_mutant[1]=exp(log(gt_mutant[1])+effect) # Genotypic value of the mutant (original scale)
+				gt_mutant[1]=gt_mutant[1]+effect # Genotypic value of the mutant (original scale)
 			}
 			if(type==2){
 				effect=rnorm(1,mean=0,sd=sig2) # Mutation's phenotypic effect
-				gt_mutant[2]=exp(log(gt_mutant[2])+effect) # Genotypic value of the mutant (original scale)
+				gt_mutant[2]=gt_mutant[2]+effect # Genotypic value of the mutant (original scale)
 			}
 			if(type==3){
 				effect=rnorm(1,mean=0,sd=sig3) # Mutation's phenotypic effect
-				gt_mutant[3]=exp(log(gt_mutant[3])+effect) # Genotypic value of the mutant (original scale)
+				gt_mutant[3]=gt_mutant[3]+effect # Genotypic value of the mutant (original scale)
 			}
 			if(type==4){
 				effect=rnorm(1,mean=0,sd=sig4) # Mutation's phenotypic effect
-				gt_mutant[4]=exp(log(gt_mutant[4])+effect) # Genotypic value of the mutant (original scale)
+				gt_mutant[4]=gt_mutant[4]+effect # Genotypic value of the mutant (original scale)
 			}
 			pt_mutant=g2p(gt_mutant,coeff) # Mutant phenotype
-			pf=fix.prob(log(pt_ances[4]),log(pt_mutant[4]),width) # Calculate fixation probability
+			pf=fix.prob(pt_ances[4],pt_mutant[4],width) # Calculate fixation probability
 			if.fix=rbinom(n=1,size=1,prob=pf) # Decide whether the mutation would fix
 			if(if.fix==1){
 				gt[,t]=gt_mutant # If the mutation fixes, the mutant genotype becomes the ancestral genotype when the next mutation would be examined
 			}
 		}
 	}
-	pt[,t]=g2p(gt[,t],coeff) # Record the phenotype
+	pt[,t]=g2p(gt[,t],coeff) # Record the phenotype (log scale)
 }
+write.table(pt[,(T+1)],file="test_out.txt",sep="\t")
 
 # Simulate multiple replicate lineages
 Nrep=100 # Number of replicate lineages
 gt=list() # Genotypic values of all lineages through time (each lineage would be a matrix in the list)
 pt=list() # Phenotypes of all lineages through time (each lineage would be a matrix in the list)
 for(n in 1:Nrep){
-	gt[[n]]=matrix(1,nrow=4,ncol=(T+1)) # Genotypic values of the n-th lineage
+	gt[[n]]=matrix(0,nrow=4,ncol=(T+1)) # Genotypic values of the n-th lineage
 	pt[[n]]=matrix(0,nrow=4,ncol=(T+1)) # Phenotypes of the n-th lineage
 	pt[[n]][,1]=g2p(gt[[n]][,1],coeff) # Initial phenotype of the n-th lineage
 	for(t in 2:(T+1)){
@@ -123,19 +126,19 @@ for(n in 1:Nrep){
 				type=sample(1:4,1,prob=c(lambda1/lambda.all,lambda2/lambda.all,lambda3/lambda.all,lambda4/lambda.all))
 				if(type==1){
 					effect=rnorm(1,mean=0,sd=sig1)
-					gt_mutant[1]=exp(log(gt_mutant[1])+effect)
+					gt_mutant[1]=gt_mutant[1]+effect
 				}
 				if(type==2){
 					effect=rnorm(1,mean=0,sd=sig2)
-					gt_mutant[2]=exp(log(gt_mutant[2])+effect)
+					gt_mutant[2]=gt_mutant[2]+effect
 				}
 				if(type==3){
 					effect=rnorm(1,mean=0,sd=sig3)
-					gt_mutant[3]=exp(log(gt_mutant[3])+effect)
+					gt_mutant[3]=gt_mutant[3]+effect
 				}
 				if(type==4){
 					effect=rnorm(1,mean=0,sd=sig4)
-					gt_mutant[4]=exp(log(gt_mutant[4])+effect)
+					gt_mutant[4]=gt_mutant[4]+effect
 				}
 				pt_mutant=g2p(gt_mutant,coeff)
 				pf=fix.prob(pt_ances[4],pt_mutant[4],width)
@@ -147,4 +150,10 @@ for(n in 1:Nrep){
 		}
 		pt[[n]][,t]=g2p(gt[[n]][,t],coeff)
 	}
+}
+write.table(pt[[Nrep]][,(T+1)],file="test_out.txt",sep="\t")
+
+out=matrix(0,nrow=Nrep,ncol=4)
+for(n in 1:Nrep){
+	out[n,]=pt[[n]][,(T+1)]
 }
