@@ -62,7 +62,7 @@ T=1e5 # Duration of the simulation
 
 # Matrix to store genotypic values
 # Rows: mRNA level of gene 1, translational efficiency of gene 1, mRNA level of gene 2, translational efficiency of gene 2
-gt=matrix(0,nrow=4,ncol=(T+1))
+gt=matrix(1,nrow=4,ncol=(T+1))
 # Matrix to store phenotypes
 # Rows: mRNA level of gene 1, protein level of gene 1, mRNA level of gene 2, protein level of gene 2
 pt=matrix(0,nrow=4,ncol=(T+1))
@@ -109,7 +109,7 @@ Nrep=100 # Number of replicate lineages
 gt=list() # Genotypic values of all lineages through time (each lineage would be a matrix in the list)
 pt=list() # Phenotypes of all lineages through time (each lineage would be a matrix in the list)
 for(n in 1:Nrep){
-	gt[[n]]=matrix(0,nrow=4,ncol=(T+1)) # Genotypic values of the n-th lineage
+	gt[[n]]=matrix(1,nrow=4,ncol=(T+1)) # Genotypic values of the n-th lineage
 	pt[[n]]=matrix(0,nrow=4,ncol=(T+1)) # Phenotypes of the n-th lineage
 	pt[[n]][,1]=g2p(gt[[n]][,1],coeff) # Initial phenotype of the n-th lineage
 	for(t in 2:(T+1)){
