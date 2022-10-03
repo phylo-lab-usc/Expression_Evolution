@@ -1,13 +1,17 @@
-#Modeling coevolution between mRNA and protein levels (simplified model without considering protein degradation)
-#Two lineages simulated each time
-#Protein level of the gene is under stabilizing selection in both lineages
+# Modeling coevolution between mRNA and protein levels (simplified model without considering protein degradation)
+# Two lineages simulated each time
+# Protein level of the gene is under stabilizing selection and has the same optimum in both lineages
 
-Ne=1e4 #effective population size
+Ne=1e4 # Effective population size
 
 # Fitness function
 # Calculate fitness given distance to the optimal phenotype and shape of fitness function
 fitness <- function(d,a){
-	w=dnorm(d,mean=0,sd=a)/dnorm(0,mean=0,sd=a) #Gaussian fitness function with SD equal to a
+	if(a==0){ # a=0 meaans no selection; set so to allow simulation of neutral evolution using the same code
+		w=1
+	}else
+		w=dnorm(d,mean=0,sd=a)/dnorm(0,mean=0,sd=a) # Gaussian fitness function with SD=a
+	}
 	return(w)
 }
 
@@ -40,8 +44,8 @@ sig2=0.1 # Variation of mutational effect on translational efficiency (log scale
 width=1 # Width of fitness fucntion (x-axis in log scale)
 
 T=1e5 # Duration of the simulation
-
 Ntest=500 # Number of independent simulations to run; each simulation can be interpreted as the representing a gene
+
 # Matrices to store evolutionary divergence in mRNA level, translational efficiency and protein level, respectively
 dist1=rep(0,Ntest);dist2=rep(0,Ntest);dist3=rep(0,Ntest)
 for(test in 1:Ntest){
