@@ -2,12 +2,16 @@
 
 Ne=1e3 # Effective population size
 dcr=1;dcp=1 # Decay rates of mRNA and protein (assumed to be the same for all genes)
-coeff=c(0.1,-0.1) # Interaction parameters; effect of gene 1 on gene 2 and effect of gene 2 on gene 1, respectively
+coeff=c(0.5,-0.5) # Interaction parameters; effect of gene 1 on gene 2 and effect of gene 2 on gene 1, respectively
 
 # Fitness function
 # Calculate fitness given distance to the optimal phenotype and shape of fitness function
 fitness <- function(d,a){
-	w=dnorm(d,mean=0,sd=a)/dnorm(0,mean=0,sd=a) #Gaussian fitness function with SD equal to a
+	if(a==0){
+		w=1
+	}else{
+		w=dnorm(d,mean=0,sd=a)/dnorm(0,mean=0,sd=a) #Gaussian fitness function with SD equal to a
+	}
 	return(w)
 }
 
@@ -53,14 +57,13 @@ lambda4=1 # Rate of mutations affecting per-mRNA translation rate (translational
 lambda.all=lambda1+lambda2+lambda3+lambda4 # Total mutation rate
 
 # Variance of mutation effect size (log scale)
-# Remember to convert to log scale before adding a mutation's effect on to the genotypic value; also remember to convert back afterwards
 sig1=0.1
 sig2=0.1
 sig3=0.1
 sig4=0.1
 
 width=1 # Width of fitness fucntion (x-axis in log scale)
-T=1e6 # Duration of the simulation
+T=1e4 # Duration of the simulation
 
 # Matrix to store genotypic values
 # Rows: mRNA level of gene 1, translational efficiency of gene 1, mRNA level of gene 2, translational efficiency of gene 2
@@ -151,9 +154,48 @@ for(n in 1:Nrep){
 		pt[[n]][,t]=g2p(gt[[n]][,t],coeff)
 	}
 }
-write.table(pt[[Nrep]][,(T+1)],file="test_out.txt",sep="\t")
+#write.table(pt[[Nrep]][,(T+1)],file="test_out.txt",sep="\t")
 
-out=matrix(0,nrow=Nrep,ncol=4)
+gt_end=matrix(0,nrow=Nrep,ncol=4) # Genotypic values of all lineages at the end of simulation
+pt_end=matrix(0,nrow=Nrep,ncol=4) # Phenotypes of all lineages at the end of simulation
+# Create a new directory to store output files
+dir_new=paste(width,"_",coeff[1],"_",coeff[2])
+dir.create(dir_new)
+setwd(paste("./",dir_new,sep="")) # Change working directory to the newly created one
 for(n in 1:Nrep){
-	out[n,]=pt[[n]][,(T+1)]
+	gt_end[n,]=gt[[n]][,(T+1)] # End-point genotypic valyes of this lineage
+	pt_end[n,]=pt[[n]][,(T+1)] # End-point phenotype of the lineage
+
+	# Create new directory for this lineage
+	dir_new=paste("out_",n,sep="")
+	dir.create(dir_new)
+	fn1=paste(dir_new,"/gt_all.txt",sep="");write.table(gt[[n]],file=fn1,sep="\t") # Genotyic values through time for this lineage
+	fn2=paste(dir_new,"/pt_all.txt",sep="");write.table(pt[[n]],file=fn2,sep="\t") # Phenotypes through time for this lineage
+	setwd("..") # Back to parental directory before going to the next lineage
 }
+setwd("..")
+# Correlation matrix for all genotypic values and phenotypes
+m.out=cov2cor(cov(data.frame(gt_end,pt_end)))
+fn=paste("cor_",width,"_",coeff[1],"_",coeff[2],".txt",sep="")
+write.table(m.out,file=fn,sep="\t")
+
+# Data matrix that contains variances of all traits through time; the last column contains end-point variances that would be used in most analyses
+var.all=matrix(0,nrow=8,ncol=(T+1))
+for(t in 2:(T+1)){
+	d=matrix(0,nrow=n,ncol=8)
+	for(n in 1:Nrep){
+		d[n,1:4]=gt[[n]][,t]
+		d[n,5:8]=pt[[n]][,t]
+	}
+	var.all[1,t]=var(d[,1])
+	var.all[2,t]=var(d[,2])
+	var.all[3,t]=var(d[,3])
+	var.all[4,t]=var(d[,4])
+	var.all[5,t]=var(d[,5])
+	var.all[6,t]=var(d[,6])
+	var.all[7,t]=var(d[,7])
+	var.all[8,t]=var(d[,8])
+}
+fn=paste("var_all_",width,"_",coeff[1],"_",coeff[2],".txt",sep="")
+write.table(var.all,file=fn,sep="\t")
+
