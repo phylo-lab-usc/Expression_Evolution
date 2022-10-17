@@ -173,12 +173,11 @@ for(n in 1:Nrep){
 	fn2=paste(dir_new,"/pt_all.txt",sep="");write.table(pt[[n]],file=fn2,sep="\t") # Phenotypes through time for this lineage
 }
 # Output end-point genotypic values and phenotypes
-fn1=paste("gt_",width,"_",coeff[1],"_",coeff[2],".txt",sep="");write.table(gt_end,file=fn1,sep="\t")
-fn2=paste("pt_",width,"_",coeff[1],"_",coeff[2],".txt",sep="");write.table(pt_end,file=fn1,sep="\t")
+write.table(gt_end,file="gt_end.txt",sep="\t")
+write.table(pt_end,file="pt_end.txt",sep="\t")
 # Correlation matrix for all genotypic values and phenotypes
 m.out=cov2cor(cov(data.frame(gt_end,pt_end)))
-fn=paste("cor_",width,"_",coeff[1],"_",coeff[2],".txt",sep="")
-write.table(m.out,file=fn,sep="\t")
+write.table(m.out,file="cor_mat.txt",sep="\t")
 
 # Data matrix that contains variances of all traits through time; the last column contains end-point variances that would be used in most analyses
 var.all=matrix(0,nrow=8,ncol=(T+1))
@@ -192,6 +191,7 @@ for(t in 2:(T+1)){
 		var.all[i,t]=var(d[,i])
 	}
 }
-fn=paste("var_all_",width,"_",coeff[1],"_",coeff[2],".txt",sep="")
-write.table(var.all,file=fn,sep="\t")
+write.table(var.all,file="var_all.txt",sep="\t")
+
+setwd("..")
 
