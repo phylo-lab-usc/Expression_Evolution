@@ -108,7 +108,7 @@ for(t in 2:(T+1)){
 	}
 	pt[,t]=g2p(gt[,t],coeff) # Record the phenotype (log scale)
 }
-write.table(pt[,(T+1)],file="test_out.txt",sep="\t")
+#write.table(pt[,(T+1)],file="test_out.txt",sep="\t")
 
 # Simulate multiple replicate lineages
 Nrep=100 # Number of replicate lineages
@@ -171,9 +171,10 @@ for(n in 1:Nrep){
 	dir.create(dir_new)
 	fn1=paste(dir_new,"/gt_all.txt",sep="");write.table(gt[[n]],file=fn1,sep="\t") # Genotyic values through time for this lineage
 	fn2=paste(dir_new,"/pt_all.txt",sep="");write.table(pt[[n]],file=fn2,sep="\t") # Phenotypes through time for this lineage
-	setwd("..") # Back to parental directory before going to the next lineage
 }
-setwd("..")
+# Output end-point genotypic values and phenotypes
+fn1=paste("gt_",width,"_",coeff[1],"_",coeff[2],".txt",sep="");write.table(gt_end,file=fn1,sep="\t")
+fn2=paste("pt_",width,"_",coeff[1],"_",coeff[2],".txt",sep="");write.table(pt_end,file=fn1,sep="\t")
 # Correlation matrix for all genotypic values and phenotypes
 m.out=cov2cor(cov(data.frame(gt_end,pt_end)))
 fn=paste("cor_",width,"_",coeff[1],"_",coeff[2],".txt",sep="")
@@ -182,19 +183,14 @@ write.table(m.out,file=fn,sep="\t")
 # Data matrix that contains variances of all traits through time; the last column contains end-point variances that would be used in most analyses
 var.all=matrix(0,nrow=8,ncol=(T+1))
 for(t in 2:(T+1)){
-	d=matrix(0,nrow=n,ncol=8)
+	d=matrix(0,nrow=Nrep,ncol=8)
 	for(n in 1:Nrep){
 		d[n,1:4]=gt[[n]][,t]
 		d[n,5:8]=pt[[n]][,t]
 	}
-	var.all[1,t]=var(d[,1])
-	var.all[2,t]=var(d[,2])
-	var.all[3,t]=var(d[,3])
-	var.all[4,t]=var(d[,4])
-	var.all[5,t]=var(d[,5])
-	var.all[6,t]=var(d[,6])
-	var.all[7,t]=var(d[,7])
-	var.all[8,t]=var(d[,8])
+	for(i in 1:8){
+		var.all[i,t]=var(d[,i])
+	}
 }
 fn=paste("var_all_",width,"_",coeff[1],"_",coeff[2],".txt",sep="")
 write.table(var.all,file=fn,sep="\t")
