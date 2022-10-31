@@ -1,5 +1,7 @@
-# Modeling coevolution between mRNA and protein levels for two interacting genes
+# Modeling coevolution between mRNA and protein levels for two interacting genes, one of which is subject to selection for an optimal protein level
 # Automatically run many combinations of interaction parameters
+
+setwd("/Users/daohanji/Desktop/Expression_Evolution")
 
 Ne=1e3 # Effective population size
 dcr=1;dcp=1 # Decay rates of mRNA and protein (assumed to be the same for all genes)
@@ -64,14 +66,25 @@ sig4=0.1
 
 width=1 # Width of fitness fucntion (x-axis in log scale)
 T=1e4 # Duration of the simulation
+T.rec=(1:(T/10))*10
 Nrep=100 # Number of replicate lineages
 
 coeff.all=c(-9:9)*0.1 # All interaction parameter values to be used; all combinations to be examined
 
+# Number of interaction parameter combinations with redundant ones excluded
+cnum=length(coeff.all)^2
+
+# Matrix to store all the output
+# Columns: interaction parameters, time, variances of genotypic values, variances of phenotypes, transcriptipn-translation correlations, RNA-protein correlations, protein/RNA variance ratios
+# Row number equals cum*T/10 because simulation results would be written every 10 time steps
+out.all=matrix(0,nrow=cnum*T/10,ncol=17)
+
+row=1
 for(c1 in 1:length(coeff.all)){ # effect of gene 1 on gene 2
 	for(c2 in 1:length(coeff.all)){ # effect of gene 2 on gene 1
 		coeff=c(coeff.all[c1],coeff.all[c2]) # Vector of interaction parameters
-
+		out.all[row:(row+T/10-1),1]=coeff[1]
+		out.all[row:(row+T/10-1),2]=coeff[2]
 		gt=list() # Genotypic values of all lineages through time (each lineage would be a matrix in the list)
 		pt=list() # Phenotypes of all lineages through time (each lineage would be a matrix in the list)
 		for(n in 1:Nrep){
@@ -87,22 +100,8 @@ for(c1 in 1:length(coeff.all)){ # effect of gene 1 on gene 2
 						pt_ances=g2p(gt_ances,coeff)
 						gt_mutant=gt_ances
 						type=sample(1:4,1,prob=c(lambda1/lambda.all,lambda2/lambda.all,lambda3/lambda.all,lambda4/lambda.all))
-						if(type==1){
-							effect=rnorm(1,mean=0,sd=sig1)
-							gt_mutant[1]=gt_mutant[1]+effect
-						}
-						if(type==2){
-							effect=rnorm(1,mean=0,sd=sig2)
-							gt_mutant[2]=gt_mutant[2]+effect
-						}
-						if(type==3){
-							effect=rnorm(1,mean=0,sd=sig3)
-							gt_mutant[3]=gt_mutant[3]+effect
-						}
-						if(type==4){
-							effect=rnorm(1,mean=0,sd=sig4)
-							gt_mutant[4]=gt_mutant[4]+effect
-						}
+						effect=rnorm(1,mean=0,sd=sig1)
+						gt_mutant[type]=gt_mutant[type]+effect
 						pt_mutant=g2p(gt_mutant,coeff)
 						pf=fix.prob(pt_ances[4],pt_mutant[4],width)
 						if.fix=rbinom(n=1,size=1,prob=pf)
@@ -114,44 +113,40 @@ for(c1 in 1:length(coeff.all)){ # effect of gene 1 on gene 2
 				pt[[n]][,t]=g2p(gt[[n]][,t],coeff)
 			}
 		}
-
-		gt_end=matrix(0,nrow=Nrep,ncol=4) # Genotypic values of all lineages at the end of simulation
-		pt_end=matrix(0,nrow=Nrep,ncol=4) # Phenotypes of all lineages at the end of simulation
-		# Create a new directory to store output files
-		dir_new=paste(width,"_",coeff[1],"_",coeff[2])
-		dir.create(dir_new)
-		setwd(paste("./",dir_new,sep="")) # Change working directory to the newly created one
-		for(n in 1:Nrep){
-			gt_end[n,]=gt[[n]][,(T+1)] # End-point genotypic valyes of this lineage
-			pt_end[n,]=pt[[n]][,(T+1)] # End-point phenotype of the lineage
-
-			# Create new directory for this lineage
-			dir_new=paste("out_",n,sep="")
-			dir.create(dir_new)
-			fn1=paste(dir_new,"/gt_all.txt",sep="");write.table(gt[[n]],file=fn1,sep="\t") # Genotyic values through time for this lineage
-			fn2=paste(dir_new,"/pt_all.txt",sep="");write.table(pt[[n]],file=fn2,sep="\t") # Phenotypes through time for this lineage
-		}
-		# Output end-point genotypic values and phenotypes
-		write.table(gt_end,file="gt_end.txt",sep="\t")
-		write.table(pt_end,file="pt_end.txt",sep="\t")
-		# Correlation matrix for all genotypic values and phenotypes
-		m.out=cov2cor(cov(data.frame(gt_end,pt_end)))
-		write.table(m.out,file="cor_mat.txt",sep="\t")
-
-		# Data matrix that contains variances of all traits through time; the last column contains end-point variances that would be used in most analyses
-		var.all=matrix(0,nrow=8,ncol=(T+1))
-		for(t in 2:(T+1)){
+		for(i in 1:length(T.rec)){
+			t=T.rec[i]
+			out.all[row+i-1,3]=t
 			d=matrix(0,nrow=Nrep,ncol=8)
 			for(n in 1:Nrep){
-				d[n,1:4]=gt[[n]][,t]
-				d[n,5:8]=pt[[n]][,t]
+				d[n,1:4]=gt[[n]][,(t+1)]
+				d[n,5:8]=pt[[n]][,(t+1)]
 			}
-			for(i in 1:8){
-				var.all[i,t]=var(d[,i])
+				
+			# Write variances in genotypic values and phenotypes
+			for(column in 4:11){
+				out.all[row+i-1,column]=var(d[,column-3])
+			}
+				
+			# Write correlations between genotypic values and between phenotypes
+			# Write ratio of variances of mRNA and protein levels
+			# Only end point values for each interaction parameter combination are calculated and written
+			if(t==T){
+				out.all[row+i-1,12]=cor(d[,1],d[,2])
+				out.all[row+i-1,13]=cor(d[,3],d[,4])
+				out.all[row+i-1,14]=cor(d[,5],d[,6])
+				out.all[row+i-1,15]=cor(d[,7],d[,8])
+				out.all[row+i-1,16]=out.all[row+i-1,9]/out.all[row+i-1,8]
+				out.all[row+i-1,17]=out.all[row+i-1,11]/out.all[row+i-1,10]
 			}
 		}
-		write.table(var.all,file="var_all.txt",sep="\t")
-
-		setwd("..") # Go back to the parental directory before going to the next interaction parameter combination
+		row=row+T/10
 	}
 }
+
+# Generate output file
+write.table(data.frame(out.all),file="out_interaction_2g_pt1.txt",sep="\t")
+
+# Generate a concise output file that contains end point values only
+out.end=out.all[which(out.all[,3]==T),]
+out.end=data.frame(out.end[,1:2],out.end[4:17])
+write.table(out.end,file="out_interaction_2g_pt1_end.txt",sep="\t")
