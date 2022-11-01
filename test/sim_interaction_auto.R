@@ -148,5 +148,5 @@ write.table(data.frame(out.all),file="out_interaction_2g_pt1.txt",sep="\t")
 
 # Generate a concise output file that contains end point values only
 out.end=out.all[which(out.all[,3]==T),]
-out.end=data.frame(out.end[,1:2],out.end[4:17])
+out.end=data.frame(out.end[,1:2],out.end[,4:17])
 write.table(out.end,file="out_interaction_2g_pt1_end.txt",sep="\t")
