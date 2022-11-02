@@ -75,7 +75,7 @@ for(n in 1:Nrep){
 }
 
 # Variance through time (applicable if repeats are interpreted as lineages)
-div=rep(0,nrow=3,ncol=(T+1))
+div=matrix(0,nrow=3,ncol=(T+1))
 for(t in 2:(T+1)){
 	div[1,t]=var(v1[,t])
 	div[2,t]=var(v2[,t])
