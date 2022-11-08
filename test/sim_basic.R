@@ -82,8 +82,8 @@ for(t in 2:(T+1)){
 	div[3,t]=var(v3[,t])
 }
 
-write.table(out.end,file="sim_basic_out_end.txt",sep="\t")
-write.table(div,file="sim_basic_out_var.txt",sep="\t")
+write.table(out.end,file="out_basic_end.txt",sep="\t")
+write.table(div,file="out_out_var.txt",sep="\t")
 
 
 
