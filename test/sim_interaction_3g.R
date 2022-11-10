@@ -99,6 +99,7 @@ width=c(0,0,1) # Width of fitness function for each ngene
 opt=rep(0,ngene)
 
 T=1e4 # Duration of simulation for each lineage
+T.rec=(1:(T/10))*10 # Time points at which results would be written into the output matrix
 Nrep=100 # Number of lineages
 
 out.all=matrix(0,nrow=nrow(permut.all)*T/10,ncol=28)
