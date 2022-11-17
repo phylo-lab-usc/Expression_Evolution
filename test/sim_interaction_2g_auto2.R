@@ -1,4 +1,5 @@
 # Modeling coevolution between mRNA and protein levels for two interacting genes that are both under selection
+# Both genes are under direct selection
 # Automatically run many combinations of interaction parameters
 
 setwd("/Users/daohanji/Desktop/Expression_Evolution")
@@ -6,6 +7,10 @@ setwd("/Users/daohanji/Desktop/Expression_Evolution")
 Ne=1e3 # Effective population size
 dcr=1;dcp=1 # Decay rates of mRNA and protein (assumed to be the same for all genes)
 ngene=2 # Number of genes under consideration
+# All values of the interaction parameter
+coeff.all=c(-9:9)*0.1
+# Number of interaction parameter combinations with redundant ones excluded
+cnum=length(coeff.all)^2/2+length(coeff.all)/2
 
 # Fitness function
 # Calculate fitness given distance to the optimal phenotype and shape of fitness function
@@ -17,23 +22,23 @@ fitness <- function(d,a){
 		}
 	}
 	w=w[which(a!=0)] # Remove traits that do not affect fitness
-	w=prod(w)^(1/length(w)) # Overall fitness calculated as geometric mean of fitness values calculated from individual traits
+	w=prod(w)^(1/length(w)) # Overall fitness calculated as geometric mean of fitness values calculated from individual traits (neutral traits excluded)
 	return(w)
 }
 
-# Fixation probability of a mutation
-# Calculate fixation probability given ancestral phenotype, mutant phenotype, and shape of fitness function
+# Fixation probability
+# Calculate fixation probability given ancestral and mutant phenotypes (distances to optimum) and SD of Gaussian fitness function
 fix.prob <- function(x1,x2,a){
-	wa=fitness(x1,a) # Ancestral fitness
-	wm=fitness(x2,a) # Mutant fitness
+	wa=fitness(x1,a) # Calculate ancestral fitness from ancestral phenotype
+	wm=fitness(x2,a) # Calculate mutant fitness from mutant phenotype
 	if(wa>0){
-		s=(wm/wa)-1 # Selection coefficient
+		s=(wm/wa)-1 # Coefficient of selection
 		if(s==0){
-			p=1/(2*Ne) # Neutral mutation
+			p=1/(2*Ne)
 		}else{
-			p=(1-exp(-2*s))/(1-exp(-4*Ne*s)) # Non-neutral mutation
+			p=(1-exp(-2*s))/(1-exp(-4*Ne*s)) # Fixation probability
 		}
-	}else{ # Ancestral fitness is recognized as 0 by R
+	}else{
 		if(wm==0){ # If mutant fitness is also recognized as 0 by R, the mutation is considered neutral.
 			p=1/(2*Ne)
 		}else{ # If mutant fitness is not recognized as 0 by R, the mutation is considered strongly beneficial and would always fix.
@@ -79,19 +84,14 @@ for(i in 1:ngene){
 	row.protein=c(row.protein,2*i)
 }
 
-u=rep(1,2*ngene) # Mutation rates for each trait
-sigma=rep(0.1,2*ngene) # SD of mutation effect size
-width=rep(1,ngene) # Width of fitness function for each ngene
+lambda.all=rep(1,2*ngene) # Mutation rates for each trait
+sig.all=rep(0.1,2*ngene) # SD of mutation effect size for each trait
+
+width=rep(1,ngene) # Width of fitness function for each gene
 
 T=1e4 # Duration of simulation for each lineage
 T.rec=(1:(T/10))*10 # Time points at which results would be written into the output matrix
 Nrep=100 # Number of lineages
-
-# All values of the interaction parameter
-coeff.all=c(-9:9)*0.1
-
-# Number of interaction parameter combinations with redundant ones excluded
-cnum=length(coeff.all)^2/2+length(coeff.all)/2
 
 # Matrix to store all the output
 # Columns: interaction parameters, time, variances of genotypic values, variances of phenotypes, transcriptipn-translation correlations, RNA-protein correlations, protein/RNA variance ratios
@@ -101,29 +101,30 @@ out.all=matrix(0,nrow=cnum*T/10,ncol=17)
 row=1
 for(c1 in 1:length(coeff.all)){
 	for(c2 in 1:length(coeff.all)){
-		if(c1<=c2){
-			# Determine the interaction matrix
+		if(c1<=c2){ # Remove redundant combinations
+			# Generate the interaction matrix
 			coeff=matrix(0,nrow=2,ncol=2)
 			coeff[1,2]=coeff.all[c1]
 			coeff[2,1]=coeff.all[c2]
 			# Write interaction parameters
 			out.all[row:(row+T/10-1),1]=coeff[1,2]
 			out.all[row:(row+T/10-1),2]=coeff[2,1]
-			gt=list();pt=list()
+			gt=list() # Genotypic values of all lineages through time (each lineage would be a matrix in the list)
+			pt=list() # Phenotypes of all lineages through time (each lineage would be a matrix in the list)
 			for(n in 1:Nrep){
 				gt[[n]]=matrix(0,nrow=2*ngene,ncol=(T+1)) # Mean genotypic values of the n-th lineage through time 
 				pt[[n]]=matrix(0,nrow=2*ngene,ncol=(T+1)) # Mean phenotypes of the n-th lineage through time 
 				pt[[n]][,1]=g2p(gt[[n]][,1],coeff) # Calculate the starting phenotype
 				for(t in 2:(T+1)){
 					gt[[n]][,t]=gt[[n]][,(t-1)]
-					nm=rpois(1,lambda=sum(u)) # Total number of mutations that would occur in this time step
+					nm=rpois(1,lambda=sum(lambda.all)) # Total number of mutations that would occur in this time step
 					if(nm>0){
 						for(i in 1:nm){
 							gt_ances=gt[[n]][,t]
 							pt_ances=g2p(gt_ances,coeff) # Calcuate ancestral phenotype from the ancestral genotype
 							gt_mutant=gt_ances
-							type=sample(1:(2*ngene),1,prob=u/sum(u)) # Decide which trait the mutation affects
-							effect=rnorm(1,mean=0,sd=sigma[type])
+							type=sample(1:(2*ngene),1,prob=lambda.all/sum(lambda.all)) # Decide which trait the mutation affects
+							effect=rnorm(1,mean=0,sd=sig.all[type])
 							gt_mutant[type]=gt_mutant[type]+effect # Add the mutation's effect to the affected trait
 							pt_mutant=g2p(gt_mutant,coeff) # Calculate mutant phenotype from the mutant genotype
 							pf=fix.prob(pt_ances[row.protein],pt_mutant[row.protein],width) # Fixation probability of the mutation
@@ -143,11 +144,13 @@ for(c1 in 1:length(coeff.all)){
 				out.all[row+i-1,3]=t
 				d=matrix(0,nrow=Nrep,ncol=8)
 				for(n in 1:Nrep){
-					d[n,1:4]=gt[[n]][,(t+1)]
-					d[n,5:8]=pt[[n]][,(t+1)]
+					# Because the first column of the data matrix represents time 0, phenotypes of time t are in column (t+1)
+					d[n,1:4]=gt[[n]][,(t+1)] # Extract genotypic values of lineage n at time t
+					d[n,5:8]=pt[[n]][,(t+1)] # Extract phenotype of lineage n at time t
 				}
 				
 				# Write variances in genotypic values and phenotypes
+				# Because the first columns are for interaction parameters and time, the 4th to 11th columns are used to store the varainces
 				for(column in 4:11){
 					out.all[row+i-1,column]=var(d[,column-3])
 				}
