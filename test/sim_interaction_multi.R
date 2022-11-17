@@ -9,6 +9,7 @@ ngene=4 # Number of genes under consideration
 coeff=matrix(0,nrow=ngene,ncol=ngene)
 # Generate random numbers as interaction parameters
 # Can be assigned in different ways depending on the question to be addressed
+# Need to check solvability before calculating the phenotype
 for(i in 1:ngene){
 	for(j in 1:ngene){
 		if(i!=j){
@@ -31,19 +32,19 @@ fitness <- function(d,a){
 	return(w)
 }
 
-# Fixation probability of a mutation
-# Calculate fixation probability given ancestral phenotype, mutant phenotype, and shape of fitness function
+# Fixation probability
+# Calculate fixation probability given ancestral and mutant phenotypes (distances to optimum) and SD of Gaussian fitness function
 fix.prob <- function(x1,x2,a){
-	wa=fitness(x1,a) # Ancestral fitness
-	wm=fitness(x2,a) # Mutant fitness
+	wa=fitness(x1,a) # Calculate ancestral fitness from ancestral phenotype
+	wm=fitness(x2,a) # Calculate mutant fitness from mutant phenotype
 	if(wa>0){
-		s=(wm/wa)-1 # Selection coefficient
+		s=(wm/wa)-1 # Coefficient of selection
 		if(s==0){
-			p=1/(2*Ne) # Neutral mutation
+			p=1/(2*Ne)
 		}else{
-			p=(1-exp(-2*s))/(1-exp(-4*Ne*s)) # Non-neutral mutation
+			p=(1-exp(-2*s))/(1-exp(-4*Ne*s)) # Fixation probability
 		}
-	}else{ # Ancestral fitness is recognized as 0 by R
+	}else{
 		if(wm==0){ # If mutant fitness is also recognized as 0 by R, the mutation is considered neutral.
 			p=1/(2*Ne)
 		}else{ # If mutant fitness is not recognized as 0 by R, the mutation is considered strongly beneficial and would always fix.
@@ -72,8 +73,10 @@ g2p <- function(gt,coeff){
 		mat[2*i,2*i-1]=1 # If the row number is even and the column number is odd, the entry is 1
 		mat[2*i,2*i]=-1 # Diagonal elements are all -1
 	}
-	pt=solve(mat,right) # Solve Ax=B equation system
-	return(pt) # Return log scale phenotypes
+	if(det(mat!=0)){
+		pt=solve(mat,right) # Solve Ax=B equation system
+		return(pt) # Return log scale phenotypes
+	}
 }
 
 # Rows of the output data that correspond to a certain type of phenotype
@@ -89,28 +92,32 @@ for(i in 1:ngene){
 	row.protein=c(row.protein,2*i)
 }
 
-u=rep(1,2*ngene) # Mutation rates for each trait
-sigma=rep(0.1,2*ngene) # SD of mutation effect size
-width=rep(1,ngene) # Width of fitness function for each ngene
+lambda.all=rep(1,2*ngene) # Mutation rates for each trait
+sig.all=rep(0.1,2*ngene) # SD of mutation effect size for each trait
+
+width=rep(1,ngene) # Width of fitness function for each gene
+opt=matrix(0,nrow=n,ncol=ngene)
 
 T=1e4 # Duration of simulation for each lineage
 Nrep=100 # Number of lineages
-gt=list();pt=list()
-
+gt=list() # Genotypic values of all lineages through time (each lineage would be a matrix in the list)
+pt=list() # Phenotypes of all lineages through time (each lineage would be a matrix in the list)
+gt_end=matrix(0,nrow=Nrep,ncol=2*ngene) # Genotypic values of all lineages at the end of simulation
+pt_end=matrix(0,nrow=Nrep,ncol=2*ngene) # Phenotypes of all lineages at the end of simulation			
 for(n in 1:Nrep){
 	gt[[n]]=matrix(0,nrow=2*ngene,ncol=(T+1)) # Mean genotypic values of the n-th lineage through time 
 	pt[[n]]=matrix(0,nrow=2*ngene,ncol=(T+1)) # Mean phenotypes of the n-th lineage through time 
 	pt[[n]][,1]=g2p(gt[[n]][,1],coeff) # Calculate the starting phenotype
 	for(t in 2:(T+1)){
 		gt[[n]][,t]=gt[[n]][,(t-1)]
-		nm=rpois(1,lambda=sum(u)) # Total number of mutations that would occur in this time step
+		nm=rpois(1,lambda=sum(lambda.all)) # Total number of mutations that would occur in this time step
 		if(nm>0){
 			for(i in 1:nm){
 				gt_ances=gt[[n]][,t]
 				pt_ances=g2p(gt_ances,coeff) # Calcuate ancestral phenotype from the ancestral genotype
 				gt_mutant=gt_ances
-				type=sample(1:(2*ngene),1,prob=u/sum(u)) # Decide which trait the mutation affects
-				effect=rnorm(1,mean=0,sd=sigma[type])
+				type=sample(1:(2*ngene),1,prob=lambda.all/sum(lambda.all)) # Decide which trait the mutation affects
+				effect=rnorm(1,mean=0,sd=sig.all[type])
 				gt_mutant[type]=gt_mutant[type]+effect # Add the mutation's effect to the affected trait
 				pt_mutant=g2p(gt_mutant,coeff) # Calculate mutant phenotype from the mutant genotype
 				pf=fix.prob(pt_ances[row.protein],pt_mutant[row.protein],width) # Fixation probability of the mutation
@@ -122,15 +129,7 @@ for(n in 1:Nrep){
 		}
 		pt[[n]][,t]=g2p(gt[[n]][,t],coeff)
 	}
+	gt_end[n,]=gt[[n]][,(T+1)]
+	pt_end[n,]=pt[[n]][,(T+1)]
 }
-
-# Re-organize each lineage's end-point genotype and phenotype into new data frames
-out1=matrix(0,nrow=Nrep,ncol=ngene*2)
-out2=matrix(0,nrow=Nrep,ncol=ngene*2)
-for(n in 1:Nrep){
-	out1[n,]=gt[[n]][,(T+1)]
-	out2[n,]=pt[[n]][,(T+1)]
-}
-
-
 
