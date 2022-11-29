@@ -2,9 +2,6 @@
 # Only one gene's protein level is directly under selection
 # Automatically run many combinations of interaction parameters
 
-setwd("/Users/daohanji/Desktop/Expression_Evolution")
-
-Ne=1e3 # Effective population size
 dcr=1;dcp=1 # Decay rates of mRNA and protein (assumed to be the same for all genes)
 coeff.all=c(-9:9)*0.1 # All interaction parameter values to be used; all combinations to be examined
 cnum=length(coeff.all)^2 # Number of interaction parameter combinations (no redundant set as only one gene is under direct selection)
@@ -22,7 +19,7 @@ fitness <- function(d,a){
 
 # Fixation probability
 # Calculate fixation probability given ancestral and mutant phenotypes (distances to optimum) and SD of Gaussian fitness function
-fix.prob <- function(x1,x2,a){
+fix.prob <- function(x1,x2,a,Ne){
 	wa=fitness(x1,a) # Calculate ancestral fitness from ancestral phenotype
 	wm=fitness(x2,a) # Calculate mutant fitness from mutant phenotype
 	if(wa>0){
@@ -53,7 +50,7 @@ g2p <- function(gt,coeff){
 	return(pt) # Return log scale phenotypes
 }
 
-# Mutation rate of each trait (mean number of mutations per unit time)
+# Mutation rate of each trait (Ne*u)
 # For transcription rate of gene 1, translation rate of gene 1, transcription rate of gene 2, translation rate of gene 2, respectively 
 lambda.all=c(1,1,1,1)
 
@@ -61,6 +58,7 @@ lambda.all=c(1,1,1,1)
 # For transcription rate of gene 1, translation rate of gene 1, transcription rate of gene 2, translation rate of gene 2, respectively 
 sig.all=c(0.1,0.1,0.1,0.1)
 
+Ne=1e3 # Effective population size
 width=1 # Width of fitness fucntion (x-axis in log scale)
 T=1e4 # Duration of the simulation
 T.rec=(1:(T/10))*10 # Time points at which results would be written
@@ -96,7 +94,7 @@ for(c1 in 1:length(coeff.all)){ # Effect of gene 1 on gene 2
 						effect=rnorm(1,mean=0,sd=sig.all[type])
 						gt_mutant[type]=gt_mutant[type]+effect # Mutant genotypic values
 						pt_mutant=g2p(gt_mutant,coeff) # Mutant phenotype
-						pf=fix.prob(pt_ances[4],pt_mutant[4],width)
+						pf=fix.prob(pt_ances[4],pt_mutant[4],width,Ne)
 						if.fix=rbinom(n=1,size=1,prob=pf)
 						if(if.fix==1){
 							gt[[n]][,t]=gt_mutant # The mutant genotypic values becomes the ancestral genotypic values before the next mutation would be considered
