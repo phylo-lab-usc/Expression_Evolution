@@ -2,9 +2,6 @@
 # Both genes are under direct selection
 # Automatically run many combinations of interaction parameters
 
-setwd("/Users/daohanji/Desktop/Expression_Evolution")
-
-Ne=1e3 # Effective population size
 dcr=1;dcp=1 # Decay rates of mRNA and protein (assumed to be the same for all genes)
 ngene=2 # Number of genes under consideration
 # All values of the interaction parameter
@@ -28,7 +25,7 @@ fitness <- function(d,a){
 
 # Fixation probability
 # Calculate fixation probability given ancestral and mutant phenotypes (distances to optimum) and SD of Gaussian fitness function
-fix.prob <- function(x1,x2,a){
+fix.prob <- function(x1,x2,a,Ne){
 	wa=fitness(x1,a) # Calculate ancestral fitness from ancestral phenotype
 	wm=fitness(x2,a) # Calculate mutant fitness from mutant phenotype
 	if(wa>0){
@@ -84,9 +81,10 @@ for(i in 1:ngene){
 	row.protein=c(row.protein,2*i)
 }
 
-lambda.all=rep(1,2*ngene) # Mutation rates for each trait
+lambda.all=rep(1,2*ngene) # Mutation rates for each trait (Ne*u)
 sig.all=rep(0.1,2*ngene) # SD of mutation effect size for each trait
 
+Ne=1e3 # Effective population size
 width=rep(1,ngene) # Width of fitness function for each gene
 
 T=1e4 # Duration of simulation for each lineage
@@ -127,7 +125,7 @@ for(c1 in 1:length(coeff.all)){
 							effect=rnorm(1,mean=0,sd=sig.all[type])
 							gt_mutant[type]=gt_mutant[type]+effect # Add the mutation's effect to the affected trait
 							pt_mutant=g2p(gt_mutant,coeff) # Calculate mutant phenotype from the mutant genotype
-							pf=fix.prob(pt_ances[row.protein],pt_mutant[row.protein],width) # Fixation probability of the mutation
+							pf=fix.prob(pt_ances[row.protein],pt_mutant[row.protein],width,Ne) # Fixation probability of the mutation
 							if.fix=rbinom(n=1,size=1,prob=pf) # Decide if the mutation would fix
 							if(if.fix==1){
 								gt[[n]][,t]=gt_mutant # If the mutation is fixed, the mutant genotype would become the ancestral phenotype when the next mutation is examined
