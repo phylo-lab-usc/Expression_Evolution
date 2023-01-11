@@ -1,54 +1,66 @@
 # Modeling coevolution between mRNA and protein levels for two interacting genes
 # Only one gene's protein level is directly under selection
 
+setwd("/Users/daohanji/Desktop/Expression_Evolution")
+
 dcr=1;dcp=1 # Decay rates of mRNA and protein (assumed to be the same for all genes)
 coeff=c(0.5,-0.5) # Interaction parameters; effect of gene 1 on gene 2 and effect of gene 2 on gene 1, respectively
 
-# Fitness function
-# Calculate fitness given distance to optimum and SD of Gaussian fitness function
-fitness <- function(d,a){ 
-	if(a==0){
-		w=1 # Fitness is set to be constant when there is no selection (a=0)
+# Fitness (univariate Guassion fitness function)
+# Calculate fitness given distance to optimum (d) and SD of the Gaussian fitness function (a)
+fitness <- function(d,a){
+	if(a==0){ # Neutrality
+		w=1
 	}else{
-		w=dnorm(d,mean=0,sd=a)/dnorm(0,mean=0,sd=a) # Calculate fitness (normalized, between 0 and 1)
+		w=dnorm(d,mean=0,sd=a)/dnorm(0,mean=0,sd=a)
 	}
 	return(w)
 }
 
 # Fixation probability
-# Calculate fixation probability given ancestral and mutant phenotypes (distances to optimum) and SD of Gaussian fitness function
+# Calculate fixation probability of a mutation given ancestral phenotype (x1), mutant phenotype (x2), SD of fitness function (a), and effective population size (Ne)
+# x1, x2, and a are all numbers when a single trait is considered; they are vectors of the same length if multiple traits are considered
 fix.prob <- function(x1,x2,a,Ne){
-	wa=fitness(x1,a) # Calculate ancestral fitness from ancestral phenotype
-	wm=fitness(x2,a) # Calculate mutant fitness from mutant phenotype
-	if(wa>0){
-		s=(wm/wa)-1 # Coefficient of selection
-		if(s==0){
-			p=1/(2*Ne)
-		}else{
-			p=(1-exp(-2*s))/(1-exp(-4*Ne*s)) # Fixation probability
-		}
+	if(a==0){ # Neutrality
+		p=1/(2*Ne)
 	}else{
-		if(wm==0){ # If mutant fitness is also recognized as 0 by R, the mutation is considered neutral.
-			p=1/(2*Ne)
-		}else{ # If mutant fitness is not recognized as 0 by R, the mutation is considered strongly beneficial and would always fix.
-			p=1
+		wa=fitness(x1,a) # Ancestral fitness
+		wm=fitness(x2,a) # Mutant fitness
+		if(wa>0){
+			s=(wm/wa)-1 # Coefficient of selection
+			if(s==0){
+				p=1/(2*Ne)
+			}else{
+				p=(1-exp(-2*s))/(1-exp(-4*Ne*s))
+			}
+		}else{ # The ancestral fitness is close to 0 (close enough to be recognized as zero by R)
+			if(wm==0){ # Both ancestral and mutant fitness are close to 0
+				p=1/(2*Ne) # The mutation is considered neutral
+			}else{ # Ancestral fitness is close to 0 while mutant fitness isn't
+				p=1 # The mutation is considered strongly beneficial
+			}
 		}
 	}
 	return(p)
 }
 
-# Genotype-phenotype map
+# Genotype-phenotype map (2 genes)
 # Calculate the phenotype (equilibrium mRNA and protein abundances) given genotypic values and interaction parameters
 # Input and output are both in log scale
+# dcr and dcp are constants are thus not among the parameters
 g2p <- function(gt,coeff){
 	a1=gt[1];b1=gt[2];a2=gt[3];b2=gt[4]
 	right=c(log(dcp)-b1,log(dcr)-a2,log(dcp)-b2,log(dcr)-a1)
 	mat=rbind(c(1,-1,0,0),c(0,coeff[1],-1,0),c(0,0,1,-1),c(-1,0,0,coeff[2]))
-	pt=solve(mat,right)
+	if(det(mat)!=0){ # Check if Ax=B is solvable; if not, return nothing (the output will have length=0)
+		pt=solve(mat,right) # Solve Ax=b equation system
+	}else{
+		pt=rep(1e4,4) # When Ax=b is not solvable, assign a phenotypic value that leads to zero fitness (when SD of the fitness function takes the highest value considered in the study)
+	}
 	return(pt) # Return log scale phenotypes
 }
 
-# Mutation rate of each trait (Ne*u)
+# Mutation rate of each trait (2*Ne*u)
 # For transcription rate of gene 1, translation rate of gene 1, transcription rate of gene 2, translation rate of gene 2, respectively 
 lambda.all=c(1,1,1,1)
 
