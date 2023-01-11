@@ -2,6 +2,8 @@
 # Simplified model without considering protein degradation; degradation would be constant terms and are omitted
 # Phenotypic values are all in log scale
 
+setwd("/Users/daohanji/Desktop/Expression_Evolution")
+
 #fitness function
 fitness <- function(d,a){ #parameters: distance to optimum and width of fitness function
 	if(a==0){
@@ -39,11 +41,11 @@ fix.prob <- function(x1,x2,a,Ne){
 
 Ne=1e3 # Effective population size
 width=0 # SD of Gaussian fitness function
-lambda.all=c(1,1) # Rates of mutations affecting transcription rate and (per-mRNA) translation rate
+lambda.all=c(1,1) # Rates of mutations affecting transcription rate and (per-mRNA) translation rate (equivalent to 2*Ne*u)
 sig.all=c(0.1,0.1) # SD of effect size of mutations affecting transcription rate and (per-mRNA) translation rate
 
-T=1e6 # Duration of each simulation
-Nrep=500 # Total number of simulations to run; can be interpreted as different genes or replicate lineages
+T=1e5 # Duration of each simulation
+Nrep=100 # Total number of simulations to run; can be interpreted as different genes or replicate lineages
 v1=matrix(0,nrow=Nrep,ncol=(T+1)) # Data matrix for transcription rates through time
 v2=matrix(0,nrow=Nrep,ncol=(T+1)) # Data matrix for translation rates through time
 v3=matrix(0,nrow=Nrep,ncol=(T+1)) # Data matrix for protein levels through time
@@ -73,14 +75,36 @@ for(n in 1:Nrep){
 }
 
 # Variance through time (applicable if repeats are interpreted as lineages)
-div=matrix(0,nrow=3,ncol=(T+1))
-for(t in 2:(T+1)){
-	div[1,t]=var(v1[,t])
-	div[2,t]=var(v2[,t])
-	div[3,t]=var(v3[,t])
+T.rec=(1:(T/100))*100
+div=matrix(0,nrow=length(T.rec),ncol=4)
+for(i in 1:length(T.rec)){
+	t=T.rec[i]
+	div[i,1]=t
+	div[i,2]=var(v1[,t])
+	div[i,3]=var(v2[,t])
+	div[i,4]=var(v3[,t])
 }
 
 fn1=paste(width,"_out_basic_end.txt",sep="")
 write.table(out.end,file=fn1,sep="\t")
 fn2=paste(width,"_out_basic_var.txt",sep="")
-write.table(div,file=fn2.txt",sep="\t")
+write.table(div,file=fn2,sep="\t")
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

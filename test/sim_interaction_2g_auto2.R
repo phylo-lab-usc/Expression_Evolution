@@ -103,7 +103,7 @@ for(i in 1:ngene){
 	row.protein=c(row.protein,2*i)
 }
 
-lambda.all=rep(1,2*ngene) # Mutation rates for each trait (Ne*u)
+lambda.all=rep(1,2*ngene) # Mutation rates for each trait (equivalent to 2*Ne*u)
 sig.all=rep(0.1,2*ngene) # SD of mutation effect size for each trait
 
 Ne=1e3 # Effective population size

@@ -60,7 +60,7 @@ g2p <- function(gt,coeff){
 	return(pt) # Return log scale phenotypes
 }
 
-# Mutation rate of each trait (2*Ne*u)
+# Mutation rate of each trait (equivalent to 2*Ne*u)
 # For transcription rate of gene 1, translation rate of gene 1, transcription rate of gene 2, translation rate of gene 2, respectively 
 lambda.all=c(1,1,1,1)
 
