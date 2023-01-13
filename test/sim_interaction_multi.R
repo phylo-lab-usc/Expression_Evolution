@@ -35,24 +35,20 @@ fitness <- function(d,a){
 # Calculate fixation probability of a mutation given ancestral phenotype (x1), mutant phenotype (x2), SD of fitness function (a), and effective population size (Ne)
 # x1, x2, and a are all numbers when a single trait is considered; they are vectors of the same length if multiple traits are considered
 fix.prob <- function(x1,x2,a,Ne){
-	if(a==0){ # Neutrality
-		p=1/(2*Ne)
-	}else{
-		wa=fitness(x1,a) # Ancestral fitness
-		wm=fitness(x2,a) # Mutant fitness
-		if(wa>0){
-			s=(wm/wa)-1 # Coefficient of selection
-			if(s==0){
-				p=1/(2*Ne)
-			}else{
-				p=(1-exp(-2*s))/(1-exp(-4*Ne*s))
-			}
-		}else{ # The ancestral fitness is close to 0 (close enough to be recognized as zero by R)
-			if(wm==0){ # Both ancestral and mutant fitness are close to 0
-				p=1/(2*Ne) # The mutation is considered neutral
-			}else{ # Ancestral fitness is close to 0 while mutant fitness isn't
-				p=1 # The mutation is considered strongly beneficial
-			}
+	wa=fitness(x1,a) # Ancestral fitness
+	wm=fitness(x2,a) # Mutant fitness
+	if(wa>0){
+		s=(wm/wa)-1 # Coefficient of selection
+		if(s==0){
+			p=1/(2*Ne)
+		}else{
+			p=(1-exp(-2*s))/(1-exp(-4*Ne*s))
+		}
+	}else{ # The ancestral fitness is close to 0 (close enough to be recognized as zero by R)
+		if(wm==0){ # Both ancestral and mutant fitness are close to 0
+			p=1/(2*Ne) # The mutation is considered neutral
+		}else{ # Ancestral fitness is close to 0 while mutant fitness isn't
+			p=1 # The mutation is considered strongly beneficial
 		}
 	}
 	return(p)
