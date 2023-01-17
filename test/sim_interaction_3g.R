@@ -25,15 +25,14 @@ v2m <- function(v){
 
 # Fitness (multivariate Gaussian fitness function)
 # Calculate the overall fitness given a set of traits' values (d, a vector) and SDs of their respective fitness functions (a, also a vector) 
+# Overall fitness calculated from Euclidean distance from the global optimum; fitness function's SD becomes a scaling coefficient (remains mathematically equivalent to original definition)
 fitness <- function(d,a){
-	w=rep(0,length(d))
-	for(i in 1:length(d)){
-		if(a[i]!=0){
-			w[i]=dnorm(d[i],mean=0,sd=a[i])/dnorm(0,mean=0,sd=a[i]) # Calculate a fitness value for each trait
-		}
-	}
-	w=w[which(a!=0)] # Remove traits that do not affect fitness
-	w=prod(w)^(1/length(w)) # Overall fitness calculated as geometric mean of fitness values calculated from individual traits
+	# Remove traits that do not affect fitness
+	ds=d[which(a>0)]
+	as=a[which(a>0)]
+	ds=ds/as # Rescale the phenotypes; when the fitness function is narrow, the distance from optimum is rescaled to be larger
+	D=sqrt(sum(ds^2)) # Overall fitness calculated as geometric mean of fitness values calculated from individual traits
+	w=dnorm(D,mean=0,sd=1)/dnorm(0,mean=0,sd=1)
 	return(w)
 }
 
@@ -41,20 +40,24 @@ fitness <- function(d,a){
 # Calculate fixation probability of a mutation given ancestral phenotype (x1), mutant phenotype (x2), SD of fitness function (a), and effective population size (Ne)
 # x1, x2, and a are all numbers when a single trait is considered; they are vectors of the same length if multiple traits are considered
 fix.prob <- function(x1,x2,a,Ne){
-	wa=fitness(x1,a) # Ancestral fitness
-	wm=fitness(x2,a) # Mutant fitness
-	if(wa>0){
-		s=(wm/wa)-1 # Coefficient of selection
-		if(s==0){
-			p=1/(2*Ne)
-		}else{
-			p=(1-exp(-2*s))/(1-exp(-4*Ne*s))
-		}
-	}else{ # The ancestral fitness is close to 0 (close enough to be recognized as zero by R)
-		if(wm==0){ # Both ancestral and mutant fitness are close to 0
-			p=1/(2*Ne) # The mutation is considered neutral
-		}else{ # Ancestral fitness is close to 0 while mutant fitness isn't
-			p=1 # The mutation is considered strongly beneficial
+	if(a==0){ # Neutrality
+		p=1/(2*Ne)
+	}else{
+		wa=fitness(x1,a) # Ancestral fitness
+		wm=fitness(x2,a) # Mutant fitness
+		if(wa>0){
+			s=(wm/wa)-1 # Coefficient of selection
+			if(s==0){
+				p=1/(2*Ne)
+			}else{
+				p=(1-exp(-2*s))/(1-exp(-4*Ne*s))
+			}
+		}else{ # The ancestral fitness is close to 0 (close enough to be recognized as zero by R)
+			if(wm==0){ # Both ancestral and mutant fitness are close to 0
+				p=1/(2*Ne) # The mutation is considered neutral
+			}else{ # Ancestral fitness is close to 0 while mutant fitness isn't
+				p=1 # The mutation is considered strongly beneficial
+			}
 		}
 	}
 	return(p)
@@ -100,7 +103,7 @@ for(i in 1:ngene){
 	row.protein=c(row.protein,2*i)
 }
 
-lambda.all=rep(1,2*ngene) # Mutation rates for each trait (equivalent to 2*Ne*u)
+lambda.all=rep(1,2*ngene) # Mutation rates for each trait
 sig.all=rep(0.1,2*ngene) # SD of mutation effect size
 
 Ne=1e3 # Effective population size

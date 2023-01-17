@@ -24,15 +24,14 @@ for(i in 1:length(coeff.all)){
 
 # Fitness (multivariate Gaussian fitness function)
 # Calculate the overall fitness given a set of traits' values (d, a vector) and SDs of their respective fitness functions (a, also a vector) 
+# Overall fitness calculated from Euclidean distance from the global optimum; fitness function's SD becomes a scaling coefficient (remains mathematically equivalent to original definition)
 fitness <- function(d,a){
-	w=rep(0,length(d))
-	for(i in 1:length(d)){
-		if(a[i]!=0){
-			w[i]=dnorm(d[i],mean=0,sd=a[i])/dnorm(0,mean=0,sd=a[i]) # Calculate a fitness value for each trait
-		}
-	}
-	w=w[which(a!=0)] # Remove traits that do not affect fitness
-	w=prod(w)^(1/length(w)) # Overall fitness calculated as geometric mean of fitness values calculated from individual traits
+	# Remove traits that do not affect fitness
+	ds=d[which(a>0)]
+	as=a[which(a>0)]
+	ds=ds/as # Rescale the phenotypes; when the fitness function is narrow, the distance from optimum is rescaled to be larger
+	D=sqrt(sum(ds^2)) # Overall fitness calculated as geometric mean of fitness values calculated from individual traits
+	w=dnorm(D,mean=0,sd=1)/dnorm(0,mean=0,sd=1)
 	return(w)
 }
 
@@ -103,7 +102,7 @@ for(i in 1:ngene){
 	row.protein=c(row.protein,2*i)
 }
 
-lambda.all=rep(1,2*ngene) # Mutation rates for each trait (equivalent to 2*Ne*u)
+lambda.all=rep(1,2*ngene) # Mutation rates for each trait (Ne*u)
 sig.all=rep(0.1,2*ngene) # SD of mutation effect size for each trait
 
 Ne=1e3 # Effective population size
