@@ -1,5 +1,7 @@
 This folder contains code used for simulations.
 
+function.R contains functions that are repeatedly used in the simulations.
+
 sim_basic.R is for simulation along replicate lineages with stabilizing selection on the protein level or under neutrality.
 
 sim_basic_auto.R is for simulation along replicate lineages under different combination of effective population size and strength of selection.
