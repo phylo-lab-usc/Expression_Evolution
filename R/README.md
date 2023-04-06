@@ -19,3 +19,5 @@ sim_basic_dir.R is for simulation along replicate lineages with directional sele
 sim_basic_dir2.R is for simulation along replicate lineages with directional selection on multiple genes with different protein levels.
 
 tr_50.txt is the phylogenetic tree with 50 species used in the study. It is an input file used by sim_tree_big_rescale.R and sim_tree_big_rescale.R.
+
+Sub-folder /plot contains code used to generate figures.
