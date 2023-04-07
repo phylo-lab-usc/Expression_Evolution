@@ -16,6 +16,8 @@ sim_interaction_2g_auto2.R is for simulation along replicate lineages for two in
 
 sim_interaction_3g.R is for simulation along replicate lineages for three interacting genes.
 
+sim_redundant.R is for simulation along replicate lineages for two functionally equivalent genes (i.e., fitness determined by the sum of their protein levels).
+
 sim_basic_dir.R is for simulation along replicate lineages with directional selection on the protein level.
 
 sim_basic_dir2.R is for simulation along replicate lineages with directional selection on multiple genes with different protein levels.
