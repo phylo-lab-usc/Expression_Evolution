@@ -1,5 +1,4 @@
 # Plot pairwise phenotypic divergence against pairwise divergence time
-setwd("/Users/rexjiang/Desktop/Lab/multivariate_trait/expression/rerun/out_tree")
 
 library(ggplot2)
 library(phytools)
@@ -80,31 +79,4 @@ g=g+scale_color_manual(values=c("orange","grey","purple")) # Color data points f
 g=g+theme(axis.text=element_text(size=12),axis.title=element_text(size=15),legend.text=element_text(size=15),legend.title=element_text(size=15)) # Adjust font size of axis labels, axis text, legend title, and legend text
 ggsave("t-div-pw.pdf",plot=g,width=7.5,height=5) # Save the plot
 
-# Lineage specific selection, in case it needs to be run
-dm<-read.table("1_1_out_tr.txt",sep="\t")
-
-dnew=data.frame(dm[,1],dm[,2]) # Extract traits and species of interest 
-colnames(dnew)=c("mRNA","translation")
-g<-ggplot(dnew,aes(x=mRNA,y=translation))
-g=g+geom_point()+geom_smooth(method="lm") # Make scatterplot and add least-squares regression line
-g=g+theme_classic() # Clear background
-g=g+xlab("Transcription rate (mRNA level)")+ylab("Translation rate") # Axis labels
-g=g+theme(axis.text=element_text(size=12),axis.title=element_text(size=15)) # Adjust font size of axis labels and text
-ggsave("cor1-tr-div.pdf",plot=g,width=5.5,height=5) # Save the plot as a file
-
-dnew=data.frame(dm[,1],dm[,3]) # Extract traits and species of interest 
-colnames(dnew)=c("mRNA","protein")
-g<-ggplot(dnew,aes(x=mRNA,y=protein))
-g=g+geom_point()+geom_smooth(method="lm") # Make scatterplot and add least-squares regression line
-g=g+theme_classic() # Clear background
-g=g+xlab("Transcription rate (mRNA level)")+ylab("Protein level") # Axis labels
-g=g+theme(axis.text=element_text(size=12),axis.title=element_text(size=15)) # Adjust font size of axis labels and text
-ggsave("cor2-tr-div.pdf",plot=g,width=5.5,height=5) # Save the plot as a file
-
-# Use basic plot function
-#plot(dm[,1],dm[,2],xlab="Transcription rate (mRNA level)",ylab="Translation rate",cex.lab=1.5)
-#abline(lm(dm[,2]~dm[,1]),col="blue",lwd=2)
-
-#plot(dm[,1],dm[,3],xlab="Transcription rate (mRNA level)",ylab="Protein level",cex.lab=1.5)
-#abline(lm(dm[,3]~dm[,1]),col="blue")
 

@@ -1,9 +1,8 @@
-#setwd("/Users/daohanji/Desktop/Expression_Evolution/rerun/out_basic")
-setwd("/Users/rexjiang/Desktop/Lab/multivariate_trait/expression/rerun/out_basic")
+# Plotting results for evolution on replicate lineages with stabilizing selection on the protein level or under neutrality
 
 library(ggplot2)
 
-# Time-variance plot
+# Time-variance plot (stabilizing selection)
 d<-read.table("out_basic_var_all.txt",sep="\t") # Data file: variance through time under stabilizing selection
 dm=d[which(d[,1]==1e3&d[,2]==1),] # Keep rows corresponding to "default" values of Ne and fitness function SD
 

@@ -1,5 +1,4 @@
-#setwd("/Users/daohanji/Desktop/Expression_Evolution/rerun/out_basic/dir/")
-setwd("/Users/rexjiang/Desktop/Lab/multivariate_trait/expression/rerun/out_basic/dir")
+# Plotting results for evolution on replicate lineages with directional selection on the protein level
 
 # End-point result (directional selection)
 dm<-read.table("1_1_out_basic_end.txt",sep="\t") # Data file: end-point phenotypes of replicate lineages that evolved under directional selection towards the same optimum
@@ -54,6 +53,15 @@ color.all=c("darkgrey",
 	"deeppink",
 	"pink",
 	"thistle")
+
+# Correlations for each gene
+cor.gene=matrix(0,nrow=length(opt.all),ncol=2)
+for(i in 1:length(opt.all)){
+	dsub=dm[which(dm[,1]==opt.all[i]),]
+	cor.gene[i,1]=cor(dsub[,2],dsub[,3])
+	cor.gene[i,2]=cor(dsub[,2],dsub[,4])
+}
+write.table(data.frame(opt.all,cor.gene),file="table_cor_multi.txt",sep="\t")
 
 colnames(dm)=c("opt","mRNA","translation","protein")
 dm$opt=factor(dm$opt)

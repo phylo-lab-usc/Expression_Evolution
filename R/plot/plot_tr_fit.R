@@ -1,5 +1,4 @@
-#setwd("/Users/daohanji/Desktop/Expression_Evolution/rerun/out_tree/error")
-setwd("/Users/rexjiang/Desktop/Lab/multivariate_trait/expression/rerun/out_tree")
+# Plot results of model fitting
 
 library(ggplot2)
 
