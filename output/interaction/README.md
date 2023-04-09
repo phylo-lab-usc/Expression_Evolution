@@ -1,0 +1,9 @@
+This folder contains results of simulations for interacting genes.
+
+out_interaction_2g_pt1_end.txt: Results of simulations where one gene (the target)'s protein level is directly subject to directional selection while the other gene (the regulator) is not. All variances and correlations are end-point values.
+Columns correspond to: the regulator's regulatory effect on the target's transcription, the target's regulatory effect on the regulator's transcription, variance of genotypic value of the regulator's transcription rate, variance of genotypic value of the regulator's translation rate, variance of genotypic value of the target's transcription rate, variance of genotypic value of the target's translation rate, variance of the regulator's mRNA level, variance of the regulator's protein level, variance of the target's mRNA level, variance of the target's protein level, transcription-translation correlation of the regulator, transcription-translation correlation of the target, mRNA-protein correlation of the regulator, mRNA-protein correlation of the target.
+
+out_interaction_2g_pt2_end.txt: Results of simulations where both genes' protein levels are under stabilizing selection. All variances and correlations are end-point values.
+Columns correspond to: gene 1's regulatory effect on gene 2's transcription, gene 2's regulatory effect on gene 1's transcription, variance of genotypic value of gene 1's transcription rate, variance of genotypic value of gene 1's translation rate, variance of genotypic value of gene 2's transcription rate, variance of genotypic value of gene 2's translation rate, variance of gene 1's mRNA level, variance of gene 1's protein level, variance of gene 2's mRNA level, variance of gene 2's protein level, transcription-translation correlation of gene 1, transcription-translation correlation of gene 2, mRNA-protein correlation of gene 1, mRNA-protein correlation of gene 2.
+
+
